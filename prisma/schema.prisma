@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String
+  avatar    String?
+  createdAt DateTime   @default(now())
+  songs     Song[]
+  playlists Playlist[]
+  favorites Favorite[]
+}
+
+model Song {
+  id             String         @id @default(cuid())
+  title          String
+  artist         String
+  album          String?
+  duration       Int
+  audioUrl       String
+  coverUrl       String?
+  genre          String?
+  uploadedById   String
+  createdAt      DateTime       @default(now())
+  uploadedBy     User           @relation(fields: [uploadedById], references: [id])
+  playlistSongs  PlaylistSong[]
+  favorites      Favorite[]
+  albumRelation  Album?         @relation(fields: [albumId], references: [id])
+  albumId        String?
+}
+
+model Album {
+  id          String  @id @default(cuid())
+  title       String
+  artist      String
+  coverUrl    String?
+  releaseYear Int?
+  songs       Song[]
+}
+
+model Playlist {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  coverUrl    String?
+  isPublic    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  user        User           @relation(fields: [userId], references: [id])
+  songs       PlaylistSong[]
+}
+
+model PlaylistSong {
+  id         String   @id @default(cuid())
+  playlistId String
+  songId     String
+  addedAt    DateTime @default(now())
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  song       Song     @relation(fields: [songId], references: [id])
+
+  @@unique([playlistId, songId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  song      Song     @relation(fields: [songId], references: [id])
+
+  @@unique([userId, songId])
+}
