@@ -31,6 +31,11 @@ export async function GET() {
         coverUrl: true,
         playCount: true,
         duration: true,
+        audioUrl: true,
+        genre: true,
+        uploadedById: true,
+        createdAt: true,
+        albumId: true,
       },
     });
 
@@ -41,6 +46,7 @@ export async function GET() {
         song: {
           select: {
             duration: true,
+            genre: true,
           },
         },
       },
@@ -51,19 +57,13 @@ export async function GET() {
       0
     );
 
-    // Get favorite genres (from most played songs)
+    // Get favorite genres
     const genreCounts: Record<string, number> = {};
-    await Promise.all(
-      history.map(async (entry) => {
-        const song = await prisma.song.findUnique({
-          where: { id: entry.songId },
-          select: { genre: true },
-        });
-        if (song?.genre) {
-          genreCounts[song.genre] = (genreCounts[song.genre] || 0) + 1;
-        }
-      })
-    );
+    history.forEach((entry) => {
+      if (entry.song.genre) {
+        genreCounts[entry.song.genre] = (genreCounts[entry.song.genre] || 0) + 1;
+      }
+    });
 
     const favoriteGenres = Object.entries(genreCounts)
       .sort(([, a], [, b]) => b - a)

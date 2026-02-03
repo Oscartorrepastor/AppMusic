@@ -15,6 +15,8 @@ export interface Song {
   audioUrl: string;
   coverUrl?: string | null;
   genre?: string | null;
+  lyrics?: string | null;
+  playCount?: number;
   uploadedById: string;
   createdAt: Date;
   albumId?: string | null;

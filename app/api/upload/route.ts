@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     // Save audio file
     const audioBytes = await audioFile.arrayBuffer();
     const audioBuffer = Buffer.from(audioBytes);
-    const audioFileName = `${Date.now()}-${audioFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const audioFileName = `${Date.now()}-${crypto.randomUUID()}-${audioFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const audioPath = join(audioDir, audioFileName);
     await writeFile(audioPath, audioBuffer);
     const audioUrl = `/uploads/audio/${audioFileName}`;
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (coverFile) {
       const coverBytes = await coverFile.arrayBuffer();
       const coverBuffer = Buffer.from(coverBytes);
-      const coverFileName = `${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const coverFileName = `${Date.now()}-${crypto.randomUUID()}-${coverFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const coverPath = join(coversDir, coverFileName);
       await writeFile(coverPath, coverBuffer);
       coverUrl = `/uploads/covers/${coverFileName}`;

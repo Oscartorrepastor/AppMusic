@@ -10,6 +10,8 @@ interface LyricsPanelProps {
   songTitle?: string;
 }
 
+const AVERAGE_SONG_DURATION_SECONDS = 180;
+
 export function LyricsPanel({ lyrics, currentTime = 0, songTitle }: LyricsPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [lines, setLines] = useState<string[]>([]);
@@ -27,7 +29,7 @@ export function LyricsPanel({ lyrics, currentTime = 0, songTitle }: LyricsPanelP
   useEffect(() => {
     if (scrollRef.current && lines.length > 0) {
       // Simple auto-scroll based on time
-      const progressRatio = currentTime / 180; // Assume average 3-minute song
+      const progressRatio = currentTime / AVERAGE_SONG_DURATION_SECONDS;
       const scrollHeight = scrollRef.current.scrollHeight;
       const targetScroll = scrollHeight * Math.min(progressRatio, 1);
       

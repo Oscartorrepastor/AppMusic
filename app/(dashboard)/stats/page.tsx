@@ -6,16 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Music, Clock, TrendingUp, Disc } from "lucide-react";
 import Image from "next/image";
 import { usePlayer } from "@/lib/contexts/PlayerContext";
-
-interface Song {
-  id: string;
-  title: string;
-  artist: string;
-  album?: string;
-  coverUrl?: string;
-  playCount: number;
-  duration: number;
-}
+import { Song as SongType } from "@/types";
 
 interface Genre {
   genre: string;
@@ -25,11 +16,11 @@ interface Genre {
 interface HistoryEntry {
   id: string;
   playedAt: string;
-  song: Song;
+  song: SongType;
 }
 
 interface Stats {
-  topSongs: Song[];
+  topSongs: SongType[];
   totalListeningTime: number;
   favoriteGenres: Genre[];
   totalPlays: number;
@@ -173,7 +164,7 @@ export default function StatsPage() {
                 <div
                   key={song.id}
                   className="flex items-center gap-4 rounded-lg p-3 transition hover:bg-gray-800/50 cursor-pointer"
-                  onClick={() => play(song as any)}
+                  onClick={() => play(song)}
                 >
                   <span className="text-lg font-bold text-gray-500 w-6">
                     {index + 1}
@@ -236,7 +227,7 @@ export default function StatsPage() {
                 <div
                   key={entry.id}
                   className="flex items-center gap-4 rounded-lg p-3 transition hover:bg-gray-800/50 cursor-pointer"
-                  onClick={() => play(entry.song as any)}
+                  onClick={() => play(entry.song)}
                 >
                   <div className="relative h-12 w-12 flex-shrink-0">
                     {entry.song.coverUrl ? (
