@@ -33,7 +33,17 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    interface WhereClause {
+      OR?: Array<{
+        title?: { contains: string; mode: "insensitive" };
+        artist?: { contains: string; mode: "insensitive" };
+        album?: { contains: string; mode: "insensitive" };
+      }>;
+      genre?: { contains: string; mode: "insensitive" };
+      artist?: { contains: string; mode: "insensitive" };
+    }
+
+    const where: WhereClause = {};
 
     if (search) {
       where.OR = [
