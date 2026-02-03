@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Library, ListMusic, Heart, Plus } from "lucide-react";
+import { Home, Search, Library, ListMusic, Heart, Plus, Upload, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreatePlaylistDialog } from "@/components/playlist/CreatePlaylistDialog";
 
@@ -13,6 +13,8 @@ const navItems = [
   { name: "Library", href: "/library", icon: Library },
   { name: "Playlists", href: "/playlists", icon: ListMusic },
   { name: "Liked Songs", href: "/liked", icon: Heart },
+  { name: "Upload", href: "/upload", icon: Upload },
+  { name: "Statistics", href: "/stats", icon: BarChart3 },
 ];
 
 export function Sidebar() {

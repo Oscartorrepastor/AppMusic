@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Loader2, ListMusic, Heart } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Loader2, ListMusic, Heart, Activity, Sliders, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { usePlayer } from "@/lib/contexts/PlayerContext";
 import { ProgressBar } from "@/components/player/ProgressBar";
 import { VolumeControl } from "@/components/player/VolumeControl";
 import { QueuePanel } from "@/components/player/QueuePanel";
+import { AudioVisualizer } from "@/components/player/AudioVisualizer";
+import { Equalizer } from "@/components/player/Equalizer";
+import { LyricsPanel } from "@/components/player/LyricsPanel";
 import Image from "next/image";
 
 export function PlayerBar() {
@@ -26,9 +30,21 @@ export function PlayerBar() {
     setVolume,
     toggleShuffle,
     toggleRepeat,
+    audioRef,
   } = usePlayer();
 
   const [showQueue, setShowQueue] = useState(false);
+  const [showVisualizer, setShowVisualizer] = useState(false);
+  const [showEqualizer, setShowEqualizer] = useState(false);
+  const [showLyrics, setShowLyrics] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  // Get audio element on client side
+  useEffect(() => {
+    if (typeof window !== 'undefined' && audioRef.current) {
+      setAudioElement(audioRef.current);
+    }
+  }, [audioRef]);
 
   return (
     <>
@@ -136,13 +152,41 @@ export function PlayerBar() {
             />
           </div>
 
-          {/* Volume & Queue Controls */}
+          {/* Volume & Additional Controls */}
           <div className="flex w-1/4 min-w-[180px] items-center justify-end space-x-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`h-8 w-8 p-0 ${showVisualizer ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
+              onClick={() => setShowVisualizer(!showVisualizer)}
+              title="Visualizer"
+            >
+              <Activity className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`h-8 w-8 p-0 ${showEqualizer ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
+              onClick={() => setShowEqualizer(!showEqualizer)}
+              title="Equalizer"
+            >
+              <Sliders className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`h-8 w-8 p-0 ${showLyrics ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
+              onClick={() => setShowLyrics(!showLyrics)}
+              title="Lyrics"
+            >
+              <FileText className="h-4 w-4" />
+            </Button>
             <Button
               size="sm"
               variant="ghost"
               className="h-8 w-8 p-0 text-gray-400 hover:text-white"
               onClick={() => setShowQueue(!showQueue)}
+              title="Queue"
             >
               <ListMusic className="h-4 w-4" />
             </Button>
@@ -152,6 +196,40 @@ export function PlayerBar() {
       </footer>
 
       {showQueue && <QueuePanel onClose={() => setShowQueue(false)} />}
+
+      {/* Visualizer Dialog */}
+      <Dialog open={showVisualizer} onOpenChange={setShowVisualizer}>
+        <DialogContent className="sm:max-w-2xl bg-gray-900 border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Audio Visualizer</DialogTitle>
+          </DialogHeader>
+          <AudioVisualizer
+            audioElement={audioElement}
+            isPlaying={isPlaying}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Equalizer Dialog */}
+      <Dialog open={showEqualizer} onOpenChange={setShowEqualizer}>
+        <DialogContent className="sm:max-w-2xl bg-gray-900 border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Equalizer</DialogTitle>
+          </DialogHeader>
+          <Equalizer audioElement={audioElement} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Lyrics Panel */}
+      <Dialog open={showLyrics} onOpenChange={setShowLyrics}>
+        <DialogContent className="sm:max-w-2xl bg-gray-900 border-gray-800 max-h-[80vh]">
+          <LyricsPanel
+            lyrics={(currentSong as any)?.lyrics}
+            currentTime={currentTime}
+            songTitle={currentSong?.title}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

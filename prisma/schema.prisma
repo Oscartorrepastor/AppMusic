@@ -10,33 +10,37 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  password  String
-  name      String
-  avatar    String?
-  createdAt DateTime   @default(now())
-  songs     Song[]
-  playlists Playlist[]
-  favorites Favorite[]
+  id              String             @id @default(cuid())
+  email           String             @unique
+  password        String
+  name            String
+  avatar          String?
+  createdAt       DateTime           @default(now())
+  songs           Song[]
+  playlists       Playlist[]
+  favorites       Favorite[]
+  listeningHistory ListeningHistory[]
 }
 
 model Song {
-  id             String         @id @default(cuid())
-  title          String
-  artist         String
-  album          String?
-  duration       Int
-  audioUrl       String
-  coverUrl       String?
-  genre          String?
-  uploadedById   String
-  createdAt      DateTime       @default(now())
-  uploadedBy     User           @relation(fields: [uploadedById], references: [id])
-  playlistSongs  PlaylistSong[]
-  favorites      Favorite[]
-  albumRelation  Album?         @relation(fields: [albumId], references: [id])
-  albumId        String?
+  id               String             @id @default(cuid())
+  title            String
+  artist           String
+  album            String?
+  duration         Int
+  audioUrl         String
+  coverUrl         String?
+  genre            String?
+  lyrics           String?
+  playCount        Int                @default(0)
+  uploadedById     String
+  createdAt        DateTime           @default(now())
+  uploadedBy       User               @relation(fields: [uploadedById], references: [id])
+  playlistSongs    PlaylistSong[]
+  favorites        Favorite[]
+  albumRelation    Album?             @relation(fields: [albumId], references: [id])
+  albumId          String?
+  listeningHistory ListeningHistory[]
 }
 
 model Album {
@@ -80,4 +84,15 @@ model Favorite {
   song      Song     @relation(fields: [songId], references: [id])
 
   @@unique([userId, songId])
+}
+
+model ListeningHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  playedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  song      Song     @relation(fields: [songId], references: [id])
+
+  @@index([userId, playedAt])
 }
