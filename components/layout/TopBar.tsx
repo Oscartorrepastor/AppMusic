@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,15 +14,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Search } from "lucide-react";
 
 export function TopBar() {
   const router = useRouter();
   const { data: session } = useSession();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
     router.push("/login");
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   const getUserInitials = (name: string) => {
@@ -34,7 +44,19 @@ export function TopBar() {
 
   return (
     <header className="fixed left-64 right-0 top-0 z-10 bg-gradient-to-b from-gray-900 to-transparent px-8 py-4">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        <form onSubmit={handleSearch} className="flex-1 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search songs, albums, artists..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-gray-800 border-gray-700 pl-10 text-white placeholder:text-gray-400"
+            />
+          </div>
+        </form>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

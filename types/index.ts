@@ -40,6 +40,16 @@ export interface Playlist {
   songs?: PlaylistSong[];
 }
 
+export interface PlaylistWithSongs extends Playlist {
+  songs: Array<{
+    id: string;
+    playlistId: string;
+    songId: string;
+    addedAt: Date;
+    song: Song;
+  }>;
+}
+
 export interface PlaylistSong {
   id: string;
   playlistId: string;
