@@ -1,0 +1,69 @@
+# Stage 1: Base
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Stage 2: Development
+FROM base AS development
+WORKDIR /app
+
+# Copy node_modules from deps
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma Client
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Development command (overridden in docker-compose)
+CMD ["npm", "run", "dev"]
+
+# Stage 3: Builder (for production)
+FROM base AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Build Next.js
+RUN npm run build
+
+# Stage 4: Production
+FROM base AS production
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy necessary files
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "server.js"]
