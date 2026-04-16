@@ -20,32 +20,45 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
 
-    const [favorites, total] = await Promise.all([
-      prisma.favorite.findMany({
-        where: { userId: user.id },
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          song: {
-            select: {
-              id: true,
-              title: true,
-              artist: true,
-              album: true,
-              duration: true,
-              audioUrl: true,
-              coverUrl: true,
-              genre: true,
-              createdAt: true,
-              uploadedById: true,
-              albumId: true,
-            },
+    const favorites = (await prisma.favorite.findMany({
+      where: { userId: user.id },
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        song: {
+          select: {
+            id: true,
+            title: true,
+            artist: true,
+            album: true,
+            duration: true,
+            audioUrl: true,
+            coverUrl: true,
+            genre: true,
+            createdAt: true,
+            uploadedById: true,
+            albumId: true,
           },
         },
-      }),
-      prisma.favorite.count({ where: { userId: user.id } }),
-    ]);
+      },
+    })) as Array<{
+      song: {
+        id: string;
+        title: string;
+        artist: string;
+        album: string | null;
+        duration: number;
+        audioUrl: string;
+        coverUrl: string | null;
+        genre: string | null;
+        createdAt: Date;
+        uploadedById: string | null;
+        albumId: string | null;
+      };
+    }>;
+
+    const total = await prisma.favorite.count({ where: { userId: user.id } });
 
     return NextResponse.json({
       favorites: favorites.map((f) => f.song),

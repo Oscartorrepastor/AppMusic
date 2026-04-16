@@ -53,13 +53,13 @@ export async function GET() {
     });
 
     const totalListeningTime = history.reduce(
-      (acc, entry) => acc + entry.song.duration,
+      (acc: number, entry: { song: { duration: number } }) => acc + entry.song.duration,
       0
     );
 
     // Get favorite genres
     const genreCounts: Record<string, number> = {};
-    history.forEach((entry) => {
+    history.forEach((entry: { song: { genre: string | null } }) => {
       if (entry.song.genre) {
         genreCounts[entry.song.genre] = (genreCounts[entry.song.genre] || 0) + 1;
       }

@@ -3,10 +3,11 @@ import { DeezerAPI } from "@/lib/deezer";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const trackId = parseInt(params.id);
+    const { id } = await params;
+    const trackId = parseInt(id);
 
     if (isNaN(trackId)) {
       return NextResponse.json(

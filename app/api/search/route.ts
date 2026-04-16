@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     // Get unique artists from songs
     if (type === "all" || type === "artists") {
-      const artistSongs = await prisma.song.findMany({
+      const artistSongs: Array<{ artist: string }> = await prisma.song.findMany({
         where: {
           artist: searchFilter,
         },
