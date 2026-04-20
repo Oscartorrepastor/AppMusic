@@ -29,6 +29,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "i18next": "^26.0.6",
+    "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
@@ -36,7 +38,9 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
+    "react-i18next": "^17.0.4",
     "tailwind-merge": "^3.4.0",
+    "yt-search": "^2.13.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -46,6 +50,7 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/yt-search": "^2.10.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^5.19.0",

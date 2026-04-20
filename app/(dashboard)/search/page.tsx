@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { SongCard } from "@/components/player/SongCard";
@@ -13,8 +14,9 @@ import { useDebounce } from "@/hooks/use-debounce";
 
 function SearchContent() {
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const initialQuery = searchParams.get("q") || "";
-  
+
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<{
     songs: Song[];
@@ -27,6 +29,7 @@ function SearchContent() {
     playlists: [],
     artists: [],
   });
+  const [externalSongs, setExternalSongs] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
@@ -36,18 +39,31 @@ function SearchContent() {
     const fetchResults = async () => {
       if (!debouncedQuery.trim()) {
         setResults({ songs: [], albums: [], playlists: [], artists: [] });
+        setExternalSongs([]);
         return;
       }
 
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `/api/search?q=${encodeURIComponent(debouncedQuery)}&type=${activeTab === "all" ? "all" : activeTab}`
-        );
+        const [response, externalResponse] = await Promise.all([
+          fetch(
+            `/api/search?q=${encodeURIComponent(debouncedQuery)}&type=${activeTab === "all" ? "all" : activeTab}`
+          ),
+          activeTab === "all" || activeTab === "songs"
+            ? fetch(`/api/music/search?q=${encodeURIComponent(debouncedQuery)}&limit=10`)
+            : Promise.resolve(null),
+        ]);
 
         if (response.ok) {
           const data = await response.json();
           setResults(data);
+        }
+
+        if (externalResponse && externalResponse.ok) {
+          const externalData = await externalResponse.json();
+          setExternalSongs(externalData.tracks || []);
+        } else {
+          setExternalSongs([]);
         }
       } catch (error) {
         console.error("Error searching:", error);
@@ -61,6 +77,7 @@ function SearchContent() {
 
   const hasResults =
     results.songs.length > 0 ||
+    externalSongs.length > 0 ||
     results.albums.length > 0 ||
     results.playlists.length > 0 ||
     results.artists.length > 0;
@@ -70,26 +87,26 @@ function SearchContent() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold text-white">Search</h1>
-        <p className="mt-2 text-gray-400">Find your favorite music</p>
+        <h1 className="text-4xl font-bold text-white">{t("search.title")}</h1>
+        <p className="mt-2 text-gray-400">{t("search.subtitle")}</p>
       </div>
 
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
         <Input
           type="text"
-          placeholder="Search songs, albums, artists, playlists..."
+          placeholder={t("search.placeholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full bg-gray-800 border-gray-700 pl-12 text-white placeholder:text-gray-400 h-12 text-lg"
+          className="h-12 w-full border-gray-700 bg-gray-800 pl-12 text-lg text-white placeholder:text-gray-400"
         />
       </div>
 
       {!query && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
             <TrendingUp className="h-5 w-5" />
-            Trending Searches
+            {t("search.trending")}
           </h2>
           <div className="flex flex-wrap gap-3">
             {trendingSearches.map((term) => (
@@ -108,27 +125,25 @@ function SearchContent() {
       {query && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="bg-gray-900">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="songs">Songs</TabsTrigger>
-            <TabsTrigger value="albums">Albums</TabsTrigger>
-            <TabsTrigger value="artists">Artists</TabsTrigger>
-            <TabsTrigger value="playlists">Playlists</TabsTrigger>
+            <TabsTrigger value="all">{t("search.all")}</TabsTrigger>
+            <TabsTrigger value="songs">{t("search.songs")}</TabsTrigger>
+            <TabsTrigger value="albums">{t("search.albums")}</TabsTrigger>
+            <TabsTrigger value="artists">{t("search.artists")}</TabsTrigger>
+            <TabsTrigger value="playlists">{t("search.playlists")}</TabsTrigger>
           </TabsList>
 
           {isLoading ? (
-            <div className="mt-8 text-center text-gray-400">Searching...</div>
+            <div className="mt-8 text-center text-gray-400">{t("search.searching")}</div>
           ) : !hasResults ? (
             <div className="mt-8 rounded-lg bg-gray-900/40 p-8 text-center">
-              <p className="text-gray-400">
-                No results found for &quot;{query}&quot;
-              </p>
+              <p className="text-gray-400">{t("search.noResults", { query })}</p>
             </div>
           ) : (
             <>
               <TabsContent value="all" className="mt-6 space-y-8">
                 {results.songs.length > 0 && (
                   <div>
-                    <h2 className="mb-4 text-2xl font-bold text-white">Songs</h2>
+                    <h2 className="mb-4 text-2xl font-bold text-white">{t("search.songs")}</h2>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                       {results.songs.slice(0, 5).map((song) => (
                         <SongCard key={song.id} song={song} />
@@ -137,9 +152,20 @@ function SearchContent() {
                   </div>
                 )}
 
+                {externalSongs.length > 0 && (
+                  <div>
+                    <h2 className="mb-4 text-2xl font-bold text-white">{t("search.onlineResults")}</h2>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                      {externalSongs.slice(0, 5).map((song) => (
+                        <SongCard key={song.id} song={song} showLikeButton={false} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {results.albums.length > 0 && (
                   <div>
-                    <h2 className="mb-4 text-2xl font-bold text-white">Albums</h2>
+                    <h2 className="mb-4 text-2xl font-bold text-white">{t("search.albums")}</h2>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                       {results.albums.slice(0, 5).map((album) => (
                         <AlbumCard key={album.id} album={album} />
@@ -150,7 +176,7 @@ function SearchContent() {
 
                 {results.artists.length > 0 && (
                   <div>
-                    <h2 className="mb-4 text-2xl font-bold text-white">Artists</h2>
+                    <h2 className="mb-4 text-2xl font-bold text-white">{t("search.artists")}</h2>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                       {results.artists.slice(0, 5).map((artist) => (
                         <div
@@ -165,7 +191,7 @@ function SearchContent() {
                           <h3 className="truncate font-semibold text-white">
                             {artist}
                           </h3>
-                          <p className="truncate text-sm text-gray-400">Artist</p>
+                          <p className="truncate text-sm text-gray-400">{t("search.artist")}</p>
                         </div>
                       ))}
                     </div>
@@ -174,7 +200,7 @@ function SearchContent() {
 
                 {results.playlists.length > 0 && (
                   <div>
-                    <h2 className="mb-4 text-2xl font-bold text-white">Playlists</h2>
+                    <h2 className="mb-4 text-2xl font-bold text-white">{t("search.playlists")}</h2>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                       {results.playlists.slice(0, 5).map((playlist) => (
                         <PlaylistCard key={playlist.id} playlist={playlist} />
@@ -186,8 +212,12 @@ function SearchContent() {
 
               <TabsContent value="songs" className="mt-6">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {results.songs.map((song) => (
-                    <SongCard key={song.id} song={song} />
+                  {[...results.songs, ...externalSongs].map((song) => (
+                    <SongCard
+                      key={song.id}
+                      song={song}
+                      showLikeButton={song.uploadedById !== "external-api"}
+                    />
                   ))}
                 </div>
               </TabsContent>
@@ -213,7 +243,7 @@ function SearchContent() {
                         </div>
                       </div>
                       <h3 className="truncate font-semibold text-white">{artist}</h3>
-                      <p className="truncate text-sm text-gray-400">Artist</p>
+                      <p className="truncate text-sm text-gray-400">{t("search.artist")}</p>
                     </div>
                   ))}
                 </div>
@@ -235,8 +265,10 @@ function SearchContent() {
 }
 
 export default function SearchPage() {
+  const { t } = useTranslation();
+
   return (
-    <Suspense fallback={<div className="text-center text-gray-400">Loading...</div>}>
+    <Suspense fallback={<div className="text-center text-gray-400">{t("search.loading")}</div>}>
       <SearchContent />
     </Suspense>
   );

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { Upload, Music, Image as ImageIcon, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,62 +22,62 @@ interface UploadFormData {
 }
 
 const GENRES = [
-  "Pop", "Rock", "Hip Hop", "Jazz", "Classical", "Electronic", 
+  "Pop", "Rock", "Hip Hop", "Jazz", "Classical", "Electronic",
   "R&B", "Country", "Blues", "Reggae", "Metal", "Folk", "Other"
 ];
 
 export default function UploadPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [audioDuration, setAudioDuration] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
-  
+
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<UploadFormData>();
   const selectedGenre = watch("genre");
 
   const extractAudioMetadata = useCallback((file: File) => {
     const audio = new Audio();
     const objectUrl = URL.createObjectURL(file);
-    
-    audio.addEventListener('loadedmetadata', () => {
+
+    audio.addEventListener("loadedmetadata", () => {
       setAudioDuration(Math.floor(audio.duration));
       URL.revokeObjectURL(objectUrl);
     });
-    
+
     audio.src = objectUrl;
 
-    // Try to extract metadata from filename
-    const fileName = file.name.replace(/\.(mp3|wav|flac|m4a)$/i, '');
-    const parts = fileName.split('-').map(s => s.trim());
-    
+    const fileName = file.name.replace(/\.(mp3|wav|flac|m4a)$/i, "");
+    const parts = fileName.split("-").map((s) => s.trim());
+
     if (parts.length === 2) {
-      setValue('artist', parts[0]);
-      setValue('title', parts[1]);
+      setValue("artist", parts[0]);
+      setValue("title", parts[1]);
     } else {
-      setValue('title', fileName);
+      setValue("title", fileName);
     }
   }, [setValue]);
 
   const handleAudioDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file && /\.(mp3|wav|flac|m4a)$/i.test(file.name)) {
       setAudioFile(file);
       extractAudioMetadata(file);
     } else {
       toast({
-        title: "Invalid file type",
-        description: "Please upload an MP3, WAV, FLAC, or M4A file",
+        title: t("upload.invalidFile"),
+        description: t("upload.invalidAudioDescription"),
         variant: "destructive",
       });
     }
-  }, [extractAudioMetadata, toast]);
+  }, [extractAudioMetadata, t, toast]);
 
   const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,8 +93,8 @@ export default function UploadPage() {
       setCoverFile(file);
     } else {
       toast({
-        title: "Invalid file type",
-        description: "Please upload a JPG, PNG, or WebP image",
+        title: t("upload.invalidFile"),
+        description: t("upload.invalidImageDescription"),
         variant: "destructive",
       });
     }
@@ -102,8 +103,8 @@ export default function UploadPage() {
   const onSubmit = async (data: UploadFormData) => {
     if (!audioFile) {
       toast({
-        title: "No audio file",
-        description: "Please select an audio file to upload",
+        title: t("upload.noAudioTitle"),
+        description: t("upload.noAudioDescription"),
         variant: "destructive",
       });
       return;
@@ -113,27 +114,25 @@ export default function UploadPage() {
     setUploadProgress(0);
 
     try {
-      // Upload files first
       const formData = new FormData();
-      formData.append('audio', audioFile);
+      formData.append("audio", audioFile);
       if (coverFile) {
-        formData.append('cover', coverFile);
+        formData.append("cover", coverFile);
       }
 
       setUploadProgress(30);
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload files');
+        throw new Error("Failed to upload files");
       }
 
       const { audioUrl, coverUrl } = await uploadResponse.json();
       setUploadProgress(60);
 
-      // Create song record
       const songData = {
         title: data.title,
         artist: data.artist,
@@ -145,31 +144,31 @@ export default function UploadPage() {
         coverUrl,
       };
 
-      const songResponse = await fetch('/api/songs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const songResponse = await fetch("/api/songs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(songData),
       });
 
       if (!songResponse.ok) {
-        throw new Error('Failed to create song');
+        throw new Error("Failed to create song");
       }
 
       setUploadProgress(100);
-      
+
       toast({
-        title: "Upload successful",
-        description: "Your song has been uploaded successfully",
+        title: t("upload.uploadSuccess"),
+        description: t("upload.uploadSuccessDescription"),
       });
 
       setTimeout(() => {
-        router.push('/library');
+        router.push("/library");
       }, 1000);
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "An error occurred during upload",
+        title: t("upload.uploadFailed"),
+        description: error instanceof Error ? error.message : t("auth.unexpectedError"),
         variant: "destructive",
       });
     } finally {
@@ -178,25 +177,27 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black p-8">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="mb-8 text-4xl font-bold text-white">Upload Music</h1>
-        
+    <div className="min-h-screen p-8">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className="rounded-3xl border border-white/5 bg-[linear-gradient(135deg,rgba(34,211,238,0.16),rgba(217,70,239,0.12),rgba(255,255,255,0.02))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+          <h1 className="text-4xl font-bold text-white">{t("upload.title")}</h1>
+          <p className="mt-2 text-slate-300">{t("upload.subtitle")}</p>
+        </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Audio Upload Zone */}
-          <Card className="border-gray-800 bg-gray-900/50 p-6">
+          <Card className="border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl">
             <div
-              className={`relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
-                dragActive 
-                  ? 'border-green-500 bg-green-500/10' 
-                  : audioFile 
-                  ? 'border-green-500 bg-green-500/5' 
-                  : 'border-gray-700 hover:border-gray-600'
+              className={`relative flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-colors ${
+                dragActive
+                  ? "border-cyan-300 bg-cyan-300/10"
+                  : audioFile
+                  ? "border-fuchsia-400 bg-fuchsia-400/5"
+                  : "border-white/10 hover:border-cyan-300/40"
               }`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
               onDrop={handleAudioDrop}
-              onClick={() => document.getElementById('audio-input')?.click()}
+              onClick={() => document.getElementById("audio-input")?.click()}
             >
               <input
                 id="audio-input"
@@ -205,85 +206,80 @@ export default function UploadPage() {
                 className="hidden"
                 onChange={handleAudioChange}
               />
-              
+
               {audioFile ? (
                 <div className="text-center">
-                  <Music className="mx-auto mb-4 h-16 w-16 text-green-500" />
+                  <Music className="mx-auto mb-4 h-16 w-16 text-cyan-300" />
                   <p className="text-lg font-medium text-white">{audioFile.name}</p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-slate-300">
                     {(audioFile.size / 1024 / 1024).toFixed(2)} MB
-                    {audioDuration > 0 && ` • ${Math.floor(audioDuration / 60)}:${String(audioDuration % 60).padStart(2, '0')}`}
+                    {audioDuration > 0 && ` • ${Math.floor(audioDuration / 60)}:${String(audioDuration % 60).padStart(2, "0")}`}
                   </p>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="mt-2"
+                    className="mt-2 text-slate-200"
                     onClick={(e) => { e.stopPropagation(); setAudioFile(null); }}
                   >
                     <X className="mr-2 h-4 w-4" />
-                    Remove
+                    {t("common.remove")}
                   </Button>
                 </div>
               ) : (
                 <div className="text-center">
-                  <Upload className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                  <Upload className="mx-auto mb-4 h-16 w-16 text-slate-300" />
                   <p className="mb-2 text-lg font-medium text-white">
-                    Drop your audio file here
+                    {t("upload.dropTitle")}
                   </p>
-                  <p className="text-sm text-gray-400">
-                    or click to browse
-                  </p>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Supports MP3, WAV, FLAC, M4A
-                  </p>
+                  <p className="text-sm text-slate-300">{t("upload.dropHint")}</p>
+                  <p className="mt-2 text-xs text-slate-400">{t("upload.supports")}</p>
                 </div>
               )}
             </div>
           </Card>
 
-          {/* Form Fields */}
-          <Card className="border-gray-800 bg-gray-900/50 p-6">
+          <Card className="border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">{t("upload.titleLabel")} *</Label>
                 <Input
                   id="title"
                   {...register("title", { required: true })}
-                  className="bg-gray-800 border-gray-700"
-                  placeholder="Song title"
+                  className="border-white/10 bg-white/5"
+                  placeholder={t("upload.songTitlePlaceholder")}
                 />
-                {errors.title && <p className="text-sm text-red-500 mt-1">Title is required</p>}
+                {errors.title && <p className="mt-1 text-sm text-red-400">{t("upload.titleRequired")}</p>}
               </div>
 
               <div>
-                <Label htmlFor="artist">Artist *</Label>
+                <Label htmlFor="artist">{t("upload.artistLabel")} *</Label>
                 <Input
                   id="artist"
                   {...register("artist", { required: true })}
-                  className="bg-gray-800 border-gray-700"
-                  placeholder="Artist name"
+                  className="border-white/10 bg-white/5"
+                  placeholder={t("upload.artistPlaceholder")}
                 />
-                {errors.artist && <p className="text-sm text-red-500 mt-1">Artist is required</p>}
+                {errors.artist && <p className="mt-1 text-sm text-red-400">{t("upload.artistRequired")}</p>}
               </div>
 
               <div>
-                <Label htmlFor="album">Album</Label>
+                <Label htmlFor="album">{t("upload.albumLabel")}</Label>
                 <Input
                   id="album"
                   {...register("album")}
-                  className="bg-gray-800 border-gray-700"
-                  placeholder="Album name (optional)"
+                  className="border-white/10 bg-white/5"
+                  placeholder={t("upload.albumPlaceholder")}
                 />
               </div>
 
               <div>
-                <Label htmlFor="genre">Genre</Label>
+                <Label htmlFor="genre">{t("upload.genreLabel")}</Label>
                 <Select value={selectedGenre} onValueChange={(value) => setValue("genre", value)}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700">
-                    <SelectValue placeholder="Select genre (optional)" />
+                  <SelectTrigger className="border-white/10 bg-white/5">
+                    <SelectValue placeholder={t("upload.genrePlaceholder")} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-white/10 bg-slate-950 text-white">
                     {GENRES.map((genre) => (
                       <SelectItem key={genre} value={genre}>
                         {genre}
@@ -294,29 +290,28 @@ export default function UploadPage() {
               </div>
 
               <div>
-                <Label htmlFor="lyrics">Lyrics</Label>
+                <Label htmlFor="lyrics">{t("upload.lyricsLabel")}</Label>
                 <Textarea
                   id="lyrics"
                   {...register("lyrics")}
-                  className="bg-gray-800 border-gray-700 min-h-[120px]"
-                  placeholder="Enter song lyrics (optional)"
+                  className="min-h-[120px] border-white/10 bg-white/5"
+                  placeholder={t("upload.lyricsPlaceholder")}
                 />
               </div>
 
-              {/* Cover Image Upload */}
               <div>
-                <Label>Cover Image</Label>
+                <Label>{t("upload.coverImage")}</Label>
                 <div className="mt-2 flex items-center gap-4">
-                  <div className="relative h-24 w-24 flex-shrink-0">
+                  <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
                     {coverFile ? (
                       <img
                         src={URL.createObjectURL(coverFile)}
                         alt="Cover preview"
-                        className="h-full w-full rounded object-cover"
+                        className="h-full w-full rounded-xl object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded border-2 border-dashed border-gray-700 bg-gray-800">
-                        <ImageIcon className="h-8 w-8 text-gray-600" />
+                      <div className="flex h-full w-full items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-white/5">
+                        <ImageIcon className="h-8 w-8 text-slate-400" />
                       </div>
                     )}
                   </div>
@@ -332,77 +327,73 @@ export default function UploadPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => document.getElementById('cover-input')?.click()}
-                      className="border-gray-700"
+                      onClick={() => document.getElementById("cover-input")?.click()}
+                      className="border-white/10 bg-white/5"
                     >
                       <ImageIcon className="mr-2 h-4 w-4" />
-                      {coverFile ? 'Change Image' : 'Upload Image'}
+                      {coverFile ? t("upload.changeImage") : t("upload.uploadImage")}
                     </Button>
                     {coverFile && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="ml-2"
+                        className="ml-2 text-slate-200"
                         onClick={() => setCoverFile(null)}
                       >
                         <X className="mr-2 h-4 w-4" />
-                        Remove
+                        {t("common.remove")}
                       </Button>
                     )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      JPG, PNG, or WebP (recommended: 500x500)
-                    </p>
+                    <p className="mt-1 text-xs text-slate-400">{t("upload.imageHelp")}</p>
                   </div>
                 </div>
               </div>
             </div>
           </Card>
 
-          {/* Upload Progress */}
           {isUploading && (
-            <Card className="border-gray-800 bg-gray-900/50 p-4">
+            <Card className="border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl">
               <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 animate-spin text-green-500" />
+                <Loader2 className="h-5 w-5 animate-spin text-cyan-300" />
                 <div className="flex-1">
-                  <p className="text-sm text-white mb-1">Uploading...</p>
-                  <div className="h-2 rounded-full bg-gray-800">
+                  <p className="mb-1 text-sm text-white">{t("upload.uploading")}</p>
+                  <div className="h-2 rounded-full bg-slate-800">
                     <div
-                      className="h-full rounded-full bg-green-500 transition-all duration-300"
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-400 transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
                 </div>
-                <span className="text-sm text-gray-400">{uploadProgress}%</span>
+                <span className="text-sm text-slate-300">{uploadProgress}%</span>
               </div>
             </Card>
           )}
 
-          {/* Submit Button */}
           <div className="flex justify-end gap-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={isUploading}
-              className="border-gray-700"
+              className="border-white/10 bg-white/5"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={!audioFile || isUploading}
-              className="bg-green-500 hover:bg-green-600"
+              className="bg-gradient-to-r from-cyan-300 to-fuchsia-400 text-slate-950 hover:opacity-95"
             >
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
+                  {t("upload.uploading")}
                 </>
               ) : (
                 <>
                   <Upload className="mr-2 h-4 w-4" />
-                  Upload Song
+                  {t("upload.uploadSong")}
                 </>
               )}
             </Button>

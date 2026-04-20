@@ -23,12 +23,13 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - api/auth (auth endpoints)
      * - api/public (public endpoints)
+     * - api/music (free external music endpoints)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - login
      * - register
      */
-    "/((?!api/auth|api/public|_next/static|_next/image|favicon.ico|login|register).*)",
+    "/((?!api/auth|api/public|api/music|_next/static|_next/image|favicon.ico|login|register).*)",
   ],
 };
