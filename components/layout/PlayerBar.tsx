@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Loader2, ListMusic, Heart, Activity, Sliders, FileText } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Loader2, ListMusic, Heart, Activity, Sliders, FileText, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { QueuePanel } from "@/components/player/QueuePanel";
 import { AudioVisualizer } from "@/components/player/AudioVisualizer";
 import { Equalizer } from "@/components/player/Equalizer";
 import { LyricsPanel } from "@/components/player/LyricsPanel";
+import { YouTubeDialog } from "@/components/player/YouTubeDialog";
 import Image from "next/image";
 
 export function PlayerBar() {
@@ -40,6 +41,7 @@ export function PlayerBar() {
   const [showVisualizer, setShowVisualizer] = useState(false);
   const [showEqualizer, setShowEqualizer] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
+  const [showYouTube, setShowYouTube] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -188,6 +190,17 @@ export function PlayerBar() {
             <Button
               size="sm"
               variant="ghost"
+              className="h-8 rounded-full border border-red-400/20 bg-red-500/10 px-3 text-red-200 hover:bg-red-500/20 hover:text-white disabled:opacity-50"
+              onClick={() => setShowYouTube(true)}
+              disabled={!currentSong}
+              title={t("player.youtubeTitle")}
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="ml-2 hidden xl:inline">YouTube</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
               className="h-8 w-8 p-0 text-slate-400 hover:text-white"
               onClick={() => setShowQueue(!showQueue)}
               title={t("player.queue")}
@@ -231,6 +244,12 @@ export function PlayerBar() {
           />
         </DialogContent>
       </Dialog>
+
+      <YouTubeDialog
+        song={currentSong}
+        open={showYouTube}
+        onOpenChange={setShowYouTube}
+      />
     </>
   );
 }
