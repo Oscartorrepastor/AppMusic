@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Search, User } from "lucide-react";
 
 export function TopBar() {
@@ -71,6 +71,9 @@ export function TopBar() {
                 className="flex items-center space-x-2 rounded-full border border-white/10 bg-black/40 hover:bg-black/60"
               >
                 <Avatar className="h-8 w-8">
+                  {session?.user?.avatar ? (
+                    <AvatarImage src={session.user.avatar} alt={session.user.name || t("topbar.userFallback")} />
+                  ) : null}
                   <AvatarFallback className="bg-gradient-to-br from-cyan-300 to-fuchsia-400 text-xs font-semibold text-slate-950">
                     {session?.user?.name
                       ? getUserInitials(session.user.name)
@@ -90,7 +93,10 @@ export function TopBar() {
                 {session?.user?.email}
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-gray-800" />
-              <DropdownMenuItem className="text-gray-300 focus:bg-gray-800 focus:text-white">
+              <DropdownMenuItem
+                onClick={() => router.push("/profile")}
+                className="cursor-pointer text-gray-300 focus:bg-gray-800 focus:text-white"
+              >
                 <User className="mr-2 h-4 w-4" />
                 <span>{t("topbar.profile")}</span>
               </DropdownMenuItem>

@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "e-cdns-images.dzcdn.net" },
       { protocol: "https", hostname: "cdns-images.dzcdn.net" },
+      { protocol: "https", hostname: "cdn-images.dzcdn.net" },
       { protocol: "https", hostname: "is1-ssl.mzstatic.com" },
       { protocol: "https", hostname: "is2-ssl.mzstatic.com" },
       { protocol: "https", hostname: "is3-ssl.mzstatic.com" },
