@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -24,6 +26,7 @@ export default function LibraryPage() {
   const [sortBy, setSortBy] = useState("dateAdded");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +42,6 @@ export default function LibraryPage() {
           const data = await songsRes.json();
           setSongs(data.songs || []);
 
-          // Extract unique artists
           const uniqueArtists = Array.from(
             new Set((data.songs || []).map((s: Song) => s.artist))
           ).sort() as string[];
@@ -85,43 +87,43 @@ export default function LibraryPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-white">Your Library</h1>
-          <p className="mt-2 text-gray-400">All your music in one place</p>
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+        <div className="rounded-3xl border border-white/5 bg-[linear-gradient(135deg,rgba(34,211,238,0.16),rgba(217,70,239,0.12),rgba(255,255,255,0.02))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+          <h1 className="text-4xl font-bold text-white">{t("library.title")}</h1>
+          <p className="mt-2 text-slate-300">{t("library.subtitle")}</p>
         </div>
         <div className="flex items-center gap-4">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px] bg-gray-800 border-gray-700 text-white">
-              <SelectValue placeholder="Sort by" />
+            <SelectTrigger className="w-[180px] border-white/10 bg-white/5 text-white">
+              <SelectValue placeholder={t("library.sortBy")} />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="dateAdded">Date Added</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="artist">Artist</SelectItem>
+            <SelectContent className="border-white/10 bg-slate-950 text-white">
+              <SelectItem value="dateAdded">{t("library.dateAdded")}</SelectItem>
+              <SelectItem value="name">{t("library.name")}</SelectItem>
+              <SelectItem value="artist">{t("common.artist")}</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex gap-2">
+          <div className="flex gap-2 rounded-full border border-white/10 bg-white/5 p-1">
             <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
+              variant="ghost"
               size="icon"
               onClick={() => setViewMode("grid")}
               className={
                 viewMode === "grid"
-                  ? "bg-gray-800"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-gradient-to-r from-cyan-300 to-fuchsia-400 text-slate-950"
+                  : "text-slate-300 hover:text-white"
               }
             >
               <Grid3x3 className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
+              variant="ghost"
               size="icon"
               onClick={() => setViewMode("list")}
               className={
                 viewMode === "list"
-                  ? "bg-gray-800"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-gradient-to-r from-cyan-300 to-fuchsia-400 text-slate-950"
+                  : "text-slate-300 hover:text-white"
               }
             >
               <List className="h-4 w-4" />
@@ -131,28 +133,26 @@ export default function LibraryPage() {
       </div>
 
       <Tabs defaultValue="songs" className="w-full">
-        <TabsList className="bg-gray-900">
-          <TabsTrigger value="songs">Songs</TabsTrigger>
-          <TabsTrigger value="albums">Albums</TabsTrigger>
-          <TabsTrigger value="artists">Artists</TabsTrigger>
-          <TabsTrigger value="playlists">Playlists</TabsTrigger>
+        <TabsList className="border border-white/10 bg-slate-950/80">
+          <TabsTrigger value="songs">{t("library.songs")}</TabsTrigger>
+          <TabsTrigger value="albums">{t("library.albums")}</TabsTrigger>
+          <TabsTrigger value="artists">{t("library.artists")}</TabsTrigger>
+          <TabsTrigger value="playlists">{t("library.playlists")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="songs" className="mt-6">
           {isLoading ? (
-            <div className="text-center text-gray-400">Loading...</div>
+            <div className="text-center text-slate-300">{t("common.loading")}</div>
           ) : sortedSongs.length === 0 ? (
-            <div className="rounded-lg bg-gray-900/40 p-8 text-center">
-              <p className="text-gray-400">
-                No songs yet. Start uploading music!
-              </p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
+              <p className="text-slate-300">{t("library.noSongs")}</p>
             </div>
           ) : (
             <div
               className={
                 viewMode === "grid"
                   ? "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                  : "space-y-2"
+                  : "grid grid-cols-1 gap-3"
               }
             >
               {sortedSongs.map((song) => (
@@ -164,10 +164,10 @@ export default function LibraryPage() {
 
         <TabsContent value="albums" className="mt-6">
           {isLoading ? (
-            <div className="text-center text-gray-400">Loading...</div>
+            <div className="text-center text-slate-300">{t("common.loading")}</div>
           ) : albums.length === 0 ? (
-            <div className="rounded-lg bg-gray-900/40 p-8 text-center">
-              <p className="text-gray-400">No albums yet.</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
+              <p className="text-slate-300">{t("library.noAlbums")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -180,10 +180,10 @@ export default function LibraryPage() {
 
         <TabsContent value="artists" className="mt-6">
           {isLoading ? (
-            <div className="text-center text-gray-400">Loading...</div>
+            <div className="text-center text-slate-300">{t("common.loading")}</div>
           ) : artists.length === 0 ? (
-            <div className="rounded-lg bg-gray-900/40 p-8 text-center">
-              <p className="text-gray-400">No artists yet.</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
+              <p className="text-slate-300">{t("library.noArtists")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -192,25 +192,24 @@ export default function LibraryPage() {
                 return (
                   <div
                     key={artist}
-                    className="group relative cursor-pointer rounded-lg bg-gray-900/40 p-4 transition hover:bg-gray-800/60"
+                    className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 hover:bg-slate-900/70"
                   >
-                    <div className="relative mb-4 aspect-square w-full">
+                    <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-full">
                       {artistSong?.coverUrl ? (
-                        <img
+                        <Image
                           src={artistSong.coverUrl}
                           alt={artist}
-                          className="h-full w-full rounded-full object-cover"
+                          fill
+                          className="rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center rounded-full bg-gray-800">
-                          <User className="h-16 w-16 text-gray-600" />
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-800">
+                          <User className="h-16 w-16 text-slate-500" />
                         </div>
                       )}
                     </div>
-                    <h3 className="truncate font-semibold text-white">
-                      {artist}
-                    </h3>
-                    <p className="truncate text-sm text-gray-400">Artist</p>
+                    <h3 className="truncate font-semibold text-white">{artist}</h3>
+                    <p className="truncate text-sm text-slate-300">{t("common.artist")}</p>
                   </div>
                 );
               })}
@@ -220,10 +219,10 @@ export default function LibraryPage() {
 
         <TabsContent value="playlists" className="mt-6">
           {isLoading ? (
-            <div className="text-center text-gray-400">Loading...</div>
+            <div className="text-center text-slate-300">{t("common.loading")}</div>
           ) : playlists.length === 0 ? (
-            <div className="rounded-lg bg-gray-900/40 p-8 text-center">
-              <p className="text-gray-400">No playlists yet.</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
+              <p className="text-slate-300">{t("library.noPlaylists")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">

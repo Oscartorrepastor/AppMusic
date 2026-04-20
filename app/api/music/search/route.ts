@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DeezerAPI } from "@/lib/deezer";
+import { searchFreeTracks } from "@/lib/free-music";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,9 +14,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const results = await DeezerAPI.searchTracks(query, limit);
+    const tracks = await searchFreeTracks(query, limit);
 
-    return NextResponse.json(results);
+    return NextResponse.json({
+      tracks,
+      total: tracks.length,
+      provider: "deezer+itunes",
+    });
   } catch (error) {
     console.error("Error searching music:", error);
     return NextResponse.json(

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Play, Pause, Heart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Song } from "@/types";
 import { usePlayer } from "@/lib/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
@@ -13,24 +14,17 @@ interface SongCardProps {
 }
 
 export function SongCard({ song, showLikeButton = true }: SongCardProps) {
-  const { currentSong, isPlaying, play, pause } = usePlayer();
+  const { currentSong, isPlaying, playQueue, pause } = usePlayer();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isCheckingFavorite, setIsCheckingFavorite] = useState(true);
-  
+
   const isCurrentSong = currentSong?.id === song.id;
   const showPlayButton = isHovered || isCurrentSong;
 
-  useEffect(() => {
-    if (showLikeButton) {
-      checkIfFavorite();
-    } else {
-      setIsCheckingFavorite(false);
-    }
-  }, [song.id, showLikeButton]);
-
-  const checkIfFavorite = async () => {
+  const checkIfFavorite = useCallback(async () => {
     try {
       const response = await fetch(`/api/favorites/${song.id}`);
       if (response.ok) {
@@ -42,19 +36,31 @@ export function SongCard({ song, showLikeButton = true }: SongCardProps) {
     } finally {
       setIsCheckingFavorite(false);
     }
-  };
+  }, [song.id]);
 
-  const handlePlayClick = () => {
+  useEffect(() => {
+    if (showLikeButton) {
+      checkIfFavorite();
+    } else {
+      setIsCheckingFavorite(false);
+    }
+  }, [checkIfFavorite, showLikeButton]);
+
+  const isExternalSong = song.uploadedById === "external-api";
+
+  const handlePlayClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+
     if (isCurrentSong && isPlaying) {
       pause();
     } else {
-      play(song);
+      playQueue([song], 0);
     }
   };
 
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     try {
       if (isFavorite) {
         const response = await fetch(`/api/favorites/${song.id}`, {
@@ -64,8 +70,8 @@ export function SongCard({ song, showLikeButton = true }: SongCardProps) {
         if (response.ok) {
           setIsFavorite(false);
           toast({
-            title: "Removed from favorites",
-            description: `${song.title} removed from your favorites`,
+            title: t("favorites.removedTitle"),
+            description: t("favorites.removedDescription", { title: song.title }),
           });
         }
       } else {
@@ -80,16 +86,16 @@ export function SongCard({ song, showLikeButton = true }: SongCardProps) {
         if (response.ok) {
           setIsFavorite(true);
           toast({
-            title: "Added to favorites",
-            description: `${song.title} added to your favorites`,
+            title: t("favorites.addedTitle"),
+            description: t("favorites.addedDescription", { title: song.title }),
           });
         }
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
       toast({
-        title: "Error",
-        description: "Failed to update favorites",
+        title: t("favorites.errorTitle"),
+        description: t("favorites.errorDescription"),
         variant: "destructive",
       });
     }
@@ -97,54 +103,60 @@ export function SongCard({ song, showLikeButton = true }: SongCardProps) {
 
   return (
     <div
-      className="group relative cursor-pointer rounded-lg bg-gray-900/40 p-4 transition hover:bg-gray-800/60"
+      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40 hover:bg-slate-900/70"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handlePlayClick}
     >
-      <div className="relative mb-4 aspect-square w-full">
+      <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-xl">
         {song.coverUrl ? (
           <Image
             src={song.coverUrl}
             alt={song.title}
             fill
-            className="rounded-md object-cover"
+            className="rounded-xl object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="h-full w-full rounded-md bg-gray-800" />
+          <div className="h-full w-full rounded-xl bg-slate-800" />
         )}
-        
+
         {showPlayButton && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-950/45">
             <button
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500 text-black transition hover:scale-105 hover:bg-green-400"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-400 text-slate-950 transition hover:scale-105"
               onClick={handlePlayClick}
             >
               {isCurrentSong && isPlaying ? (
                 <Pause className="h-5 w-5 fill-current" />
               ) : (
-                <Play className="h-5 w-5 fill-current ml-0.5" />
+                <Play className="ml-0.5 h-5 w-5 fill-current" />
               )}
             </button>
+          </div>
+        )}
+
+        {isExternalSong && (
+          <div className="absolute left-2 top-2 rounded-full border border-cyan-300/40 bg-slate-950/75 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200">
+            {t("player.previewBadge")}
           </div>
         )}
 
         {showLikeButton && !isCheckingFavorite && (
           <button
             onClick={handleLikeClick}
-            className="absolute bottom-2 right-2 rounded-full bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/80"
+            className="absolute bottom-2 right-2 rounded-full bg-slate-950/70 p-2 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-slate-900"
           >
             <Heart
               className={`h-4 w-4 transition-colors ${
-                isFavorite ? "fill-green-500 text-green-500" : "text-white"
+                isFavorite ? "fill-fuchsia-400 text-fuchsia-400" : "text-white"
               }`}
             />
           </button>
         )}
       </div>
-      
+
       <h3 className="truncate font-semibold text-white">{song.title}</h3>
-      <p className="truncate text-sm text-gray-400">{song.artist}</p>
+      <p className="truncate text-sm text-slate-300">{song.artist}</p>
     </div>
   );
 }

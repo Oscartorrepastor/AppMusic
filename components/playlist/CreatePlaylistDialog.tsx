@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -30,14 +31,15 @@ export function CreatePlaylistDialog({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a playlist name",
+        title: t("playlistDialog.errorTitle"),
+        description: t("playlistDialog.enterName"),
         variant: "destructive",
       });
       return;
@@ -59,14 +61,14 @@ export function CreatePlaylistDialog({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create playlist");
+        throw new Error(t("playlistDialog.createError"));
       }
 
       const playlist = await response.json();
 
       toast({
-        title: "Success",
-        description: "Playlist created successfully",
+        title: t("playlistDialog.successTitle"),
+        description: t("playlistDialog.successDescription"),
       });
 
       setName("");
@@ -77,8 +79,8 @@ export function CreatePlaylistDialog({
     } catch (error) {
       console.error("Error creating playlist:", error);
       toast({
-        title: "Error",
-        description: "Failed to create playlist",
+        title: t("playlistDialog.errorTitle"),
+        description: t("playlistDialog.createError"),
         variant: "destructive",
       });
     } finally {
@@ -88,35 +90,35 @@ export function CreatePlaylistDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900 border-gray-800 text-white">
+      <DialogContent className="border-gray-800 bg-gray-900 text-white">
         <DialogHeader>
-          <DialogTitle>Create Playlist</DialogTitle>
+          <DialogTitle>{t("playlistDialog.title")}</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Give your playlist a name and description
+            {t("playlistDialog.description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("playlistDialog.name")}</Label>
               <Input
                 id="name"
-                placeholder="My Playlist"
+                placeholder={t("playlistDialog.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoading}
-                className="bg-gray-800 border-gray-700"
+                className="border-gray-700 bg-gray-800"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">{t("playlistDialog.descriptionLabel")}</Label>
               <Textarea
                 id="description"
-                placeholder="Add a description..."
+                placeholder={t("playlistDialog.descriptionPlaceholder")}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isLoading}
-                className="bg-gray-800 border-gray-700"
+                className="border-gray-700 bg-gray-800"
               />
             </div>
           </div>
@@ -127,14 +129,14 @@ export function CreatePlaylistDialog({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Cancel
+              {t("playlistDialog.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-emerald-500 text-black hover:bg-emerald-400"
             >
-              {isLoading ? "Creating..." : "Create"}
+              {isLoading ? t("playlistDialog.creating") : t("playlistDialog.create")}
             </Button>
           </DialogFooter>
         </form>

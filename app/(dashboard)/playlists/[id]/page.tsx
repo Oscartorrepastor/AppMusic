@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { usePlayer } from "@/lib/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,7 @@ export default function PlaylistDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { currentSong, isPlaying, playQueue, pause } = usePlayer();
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,8 +61,8 @@ export default function PlaylistDetailPage() {
           setPlaylist(data);
         } else if (response.status === 404) {
           toast({
-            title: "Error",
-            description: "Playlist not found",
+            title: t("playlistDialog.errorTitle"),
+            description: t("playlistDetail.notFound"),
             variant: "destructive",
           });
           router.push("/library");
@@ -68,8 +70,8 @@ export default function PlaylistDetailPage() {
       } catch (error) {
         console.error("Error fetching playlist:", error);
         toast({
-          title: "Error",
-          description: "Failed to load playlist",
+          title: t("playlistDialog.errorTitle"),
+          description: t("playlistDetail.loadError"),
           variant: "destructive",
         });
       } finally {
@@ -78,7 +80,7 @@ export default function PlaylistDetailPage() {
     };
 
     fetchPlaylist();
-  }, [params.id, router, toast]);
+  }, [params.id, router, t, toast]);
 
   const handlePlayAll = () => {
     if (!playlist || playlist.songs.length === 0) return;
@@ -99,7 +101,7 @@ export default function PlaylistDetailPage() {
   const handleDelete = async () => {
     if (!playlist) return;
 
-    if (!confirm("Are you sure you want to delete this playlist?")) return;
+    if (!confirm(t("playlistDetail.deleteConfirm"))) return;
 
     try {
       const response = await fetch(`/api/playlists/${playlist.id}`, {
@@ -108,18 +110,18 @@ export default function PlaylistDetailPage() {
 
       if (response.ok) {
         toast({
-          title: "Success",
-          description: "Playlist deleted successfully",
+          title: t("playlistDialog.successTitle"),
+          description: t("playlistDetail.deleted"),
         });
         router.push("/library");
       } else {
-        throw new Error("Failed to delete playlist");
+        throw new Error(t("playlistDetail.deleteError"));
       }
     } catch (error) {
       console.error("Error deleting playlist:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete playlist",
+        title: t("playlistDialog.errorTitle"),
+        description: t("playlistDetail.deleteError"),
         variant: "destructive",
       });
     }
@@ -132,7 +134,7 @@ export default function PlaylistDetailPage() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-gray-400">Loading...</div>;
+    return <div className="text-center text-slate-300">{t("playlistDetail.loading")}</div>;
   }
 
   if (!playlist) {
@@ -148,19 +150,19 @@ export default function PlaylistDetailPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex gap-6">
-        <div className="relative h-64 w-64 flex-shrink-0">
+      <div className="flex flex-col gap-6 rounded-3xl border border-white/5 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(217,70,239,0.12),rgba(255,255,255,0.02))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)] lg:flex-row">
+        <div className="relative h-64 w-64 flex-shrink-0 overflow-hidden rounded-2xl">
           {playlist.coverUrl ? (
             <Image
               src={playlist.coverUrl}
               alt={playlist.name}
               fill
-              className="rounded-lg object-cover"
+              className="rounded-2xl object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-800">
+            <div className="flex h-full w-full items-center justify-center rounded-2xl bg-slate-800">
               <svg
-                className="h-24 w-24 text-gray-600"
+                className="h-24 w-24 text-slate-500"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -171,21 +173,21 @@ export default function PlaylistDetailPage() {
         </div>
 
         <div className="flex flex-col justify-end">
-          <p className="text-sm font-medium text-white">Playlist</p>
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">{t("playlistDetail.playlist")}</p>
           <h1 className="mt-2 text-5xl font-bold text-white">{playlist.name}</h1>
           {playlist.description && (
-            <p className="mt-4 text-gray-400">{playlist.description}</p>
+            <p className="mt-4 text-slate-300">{playlist.description}</p>
           )}
-          <div className="mt-4 flex items-center gap-2 text-sm text-gray-400">
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-300">
             <span>{playlist.user.name}</span>
             <span>•</span>
             <span>
-              {songs.length} {songs.length === 1 ? "song" : "songs"}
+              {songs.length} {songs.length === 1 ? t("common.song") : t("common.songs")}
             </span>
             {totalDuration > 0 && (
               <>
                 <span>•</span>
-                <span>{Math.floor(totalDuration / 60)} min</span>
+                <span>{t("playlistDetail.minutes", { count: Math.floor(totalDuration / 60) })}</span>
               </>
             )}
           </div>
@@ -196,52 +198,52 @@ export default function PlaylistDetailPage() {
         <Button
           onClick={handlePlayAll}
           disabled={songs.length === 0}
-          className="h-12 w-12 rounded-full bg-green-500 hover:bg-green-400 hover:scale-105 transition-all"
+          className="h-12 w-12 rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-400 text-slate-950 transition-all hover:scale-105 hover:opacity-95"
         >
           {isCurrentPlaylist ? (
             <Pause className="h-6 w-6 fill-current" />
           ) : (
-            <Play className="h-6 w-6 fill-current ml-0.5" />
+            <Play className="ml-0.5 h-6 w-6 fill-current" />
           )}
         </Button>
-        <Button variant="ghost" className="text-gray-400 hover:text-white">
+        <Button variant="ghost" className="text-slate-300 hover:text-white">
           <Edit className="mr-2 h-4 w-4" />
-          Edit
+          {t("playlistDetail.edit")}
         </Button>
         <Button
           variant="ghost"
           onClick={handleDelete}
-          className="text-gray-400 hover:text-red-500"
+          className="text-slate-300 hover:text-red-400"
         >
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+          {t("playlistDetail.delete")}
         </Button>
       </div>
 
-      <div className="space-y-2">
-        <div className="grid grid-cols-[16px_4fr_2fr_1fr] gap-4 border-b border-gray-800 px-4 py-2 text-sm text-gray-400">
+      <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+        <div className="grid grid-cols-[16px_4fr_2fr_1fr] gap-4 border-b border-white/10 px-4 py-2 text-sm text-slate-300">
           <div>#</div>
-          <div>Title</div>
-          <div>Album</div>
+          <div>{t("playlistDetail.titleColumn")}</div>
+          <div>{t("playlistDetail.albumColumn")}</div>
           <div className="text-right">
             <Clock className="inline h-4 w-4" />
           </div>
         </div>
 
         {songs.length === 0 ? (
-          <div className="rounded-lg bg-gray-900/40 p-8 text-center">
-            <p className="text-gray-400">No songs in this playlist yet</p>
+          <div className="rounded-xl p-8 text-center">
+            <p className="text-slate-300">{t("playlistDetail.noSongs")}</p>
           </div>
         ) : (
           songs.map((song, index) => (
             <div
               key={song.id}
-              className="group grid grid-cols-[16px_4fr_2fr_1fr] gap-4 rounded-md px-4 py-2 hover:bg-gray-800/40 cursor-pointer"
+              className="group grid cursor-pointer grid-cols-[16px_4fr_2fr_1fr] gap-4 rounded-xl px-4 py-3 transition hover:bg-white/5"
               onClick={() => playQueue(songs, index)}
             >
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center text-slate-300">
                 {currentSong?.id === song.id && isPlaying ? (
-                  <span className="text-green-500">▶</span>
+                  <span className="text-cyan-300">▶</span>
                 ) : (
                   <span className="group-hover:hidden">{index + 1}</span>
                 )}
@@ -249,21 +251,24 @@ export default function PlaylistDetailPage() {
               </div>
               <div className="flex items-center gap-3">
                 {song.coverUrl && (
-                  <img
-                    src={song.coverUrl}
-                    alt={song.title}
-                    className="h-10 w-10 rounded"
-                  />
+                  <div className="relative h-10 w-10 overflow-hidden rounded-lg">
+                    <Image
+                      src={song.coverUrl}
+                      alt={song.title}
+                      fill
+                      className="rounded-lg object-cover"
+                    />
+                  </div>
                 )}
                 <div>
                   <div className="font-medium text-white">{song.title}</div>
-                  <div className="text-sm text-gray-400">{song.artist}</div>
+                  <div className="text-sm text-slate-300">{song.artist}</div>
                 </div>
               </div>
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center text-slate-300">
                 {song.album || "-"}
               </div>
-              <div className="flex items-center justify-end text-gray-400">
+              <div className="flex items-center justify-end text-slate-300">
                 {formatDuration(song.duration)}
               </div>
             </div>

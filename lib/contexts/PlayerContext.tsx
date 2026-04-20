@@ -63,13 +63,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const play = useCallback((song?: Song) => {
     if (song) {
-      setState((prev) => ({
-        ...prev,
-        currentSong: song,
-        isPlaying: true,
-        isLoading: true,
-        currentTime: 0,
-      }));
+      setState((prev) => {
+        const nextQueue = prev.queue.some((queuedSong) => queuedSong.id === song.id)
+          ? prev.queue
+          : [song, ...prev.queue.filter((queuedSong) => queuedSong.id !== song.id)];
+
+        return {
+          ...prev,
+          currentSong: song,
+          queue: nextQueue,
+          isPlaying: true,
+          isLoading: true,
+          currentTime: 0,
+        };
+      });
 
       if (audioRef.current) {
         audioRef.current.src = song.audioUrl;
@@ -352,7 +359,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-      <audio ref={audioRef} />
+      <audio ref={audioRef} crossOrigin="anonymous" preload="metadata" />
     </PlayerContext.Provider>
   );
 }

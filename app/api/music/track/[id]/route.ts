@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DeezerAPI } from "@/lib/deezer";
+import { getFreeTrack } from "@/lib/free-music";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const trackId = parseInt(params.id);
+    const { id } = await context.params;
+    const track = await getFreeTrack(id);
 
-    if (isNaN(trackId)) {
+    if (!track) {
       return NextResponse.json(
         { error: "Invalid track ID" },
         { status: 400 }
       );
     }
-
-    const track = await DeezerAPI.getTrack(trackId);
 
     return NextResponse.json(track);
   } catch (error) {
