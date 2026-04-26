@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Play, Pause, Heart } from "lucide-react";
+import { Play, Pause, Heart, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Song } from "@/types";
 import { usePlayer } from "@/lib/contexts/PlayerContext";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 interface SongCardProps {
@@ -56,6 +57,12 @@ export function SongCard({ song, showLikeButton = true }: SongCardProps) {
     } else {
       playQueue([song], 0);
     }
+  };
+
+  const handleOpenYouTube = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const query = encodeURIComponent(`${song.artist} ${song.title} official audio`);
+    window.open(`https://www.youtube.com/results?search_query=${query}`, "_blank", "noopener,noreferrer");
   };
 
   const handleLikeClick = async (e: React.MouseEvent) => {
@@ -157,6 +164,16 @@ export function SongCard({ song, showLikeButton = true }: SongCardProps) {
 
       <h3 className="truncate font-semibold text-white">{song.title}</h3>
       <p className="truncate text-sm text-slate-300">{song.artist}</p>
+
+      <Button
+        type="button"
+        variant="ghost"
+        className="mt-3 w-full justify-center rounded-xl border border-red-400/25 bg-red-500/10 text-red-100 hover:bg-red-500/20 hover:text-white"
+        onClick={handleOpenYouTube}
+      >
+        <ExternalLink className="mr-2 h-4 w-4" />
+        {t("player.openYoutube")}
+      </Button>
     </div>
   );
 }

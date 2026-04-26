@@ -190,13 +190,13 @@ export function PlayerBar() {
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 rounded-full border border-red-400/20 bg-red-500/10 px-3 text-red-200 hover:bg-red-500/20 hover:text-white disabled:opacity-50"
+              className="h-9 rounded-full border border-red-400/30 bg-gradient-to-r from-red-500/20 to-fuchsia-500/20 px-4 text-red-100 hover:scale-[1.02] hover:bg-red-500/25 hover:text-white disabled:opacity-50"
               onClick={() => setShowYouTube(true)}
               disabled={!currentSong}
               title={t("player.youtubeTitle")}
             >
               <ExternalLink className="h-4 w-4" />
-              <span className="ml-2 hidden xl:inline">YouTube</span>
+              <span className="ml-2 font-medium">YouTube</span>
             </Button>
             <Button
               size="sm"
